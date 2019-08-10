@@ -78,7 +78,7 @@ class Basic_Trainer(pl.LightningModule):
 
     def configure_optimizers(self):
         # return list of optimizers
-        optimizer = optim.SGD(self.parameters(), lr=0.01)
+        optimizer = optim.SGD(self.model.parameters(), lr=0.01)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20)
         return [optimizer], [scheduler]
 
