@@ -1,4 +1,5 @@
 import torch
+import argparse
 
 import numpy as np
 import torch.nn as nn
@@ -11,6 +12,7 @@ from test_tube import Experiment
 
 from voc_loader import load_voc
 from metrics import mean_average_precision
+from utils import available_gpu
 from utils import LightningConfig
 from utils import AverageMeter
 
@@ -25,6 +27,7 @@ class Basic_Trainer(pl.LightningModule):
         # Reconfigure last classifier for fine-tuning
         # FIXME newly added layer might need some init work?
         self.model.classifier[6] = nn.Linear(4096, 20)
+        nn.init.xavier_uniform(self.model.classifier[6].weight)
         self.model.cuda()
 
     def forward(self, x):
@@ -69,6 +72,7 @@ class Basic_Trainer(pl.LightningModule):
             else:
                 pred_whole = batch_pred
                 label_whole = batch_label
+
         mAP = mean_average_precision(pred_whole, label_whole)
         return {"avg_val_loss": validation_loss.avg, "meanAP": mAP}
 
@@ -91,20 +95,31 @@ class Basic_Trainer(pl.LightningModule):
         return load_voc("test")
 
 
-def main():
+def main(args):
+    print(f"Running on GPU{available_gpu()}")
     model = Basic_Trainer(
         LightningConfig(
             imagepath="",
             train_labelpath="",
             valid_labelpath="",
-            pretrained=False,
+            pretrained=args.pretrained,
         )
     )
-    exp = Experiment(save_dir="runs/alexnet_no_pretrained", name="Baseline")
+    exp = Experiment(save_dir=f"runs/{args.desc}", name="Baseline")
     trainer = Trainer(experiment=exp)
     trainer.fit(model)
     exp.save()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser("fai-ssl-challenge-parser")
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--lr_decay", type=int, default=20)
+    parser.add_argument("--lr", type=float, default=0.01)
+    parser.add_argument("--resume", type=str)
+    parser.add_argument("--desc", type=str, default="no description specified")
+    parser.add_argument("--pretrained", action="store_true")
+
+    parser.set_defaults(pretrained=False)
+    args = parser.parse_args()
+    main(args)
