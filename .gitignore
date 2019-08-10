@@ -13,3 +13,6 @@ __pycache__/
 imagenet1k/
 coco/
 #voc2007/
+
+*runs/
+*logs/
