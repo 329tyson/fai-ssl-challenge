@@ -37,6 +37,7 @@ class VOC_DATASET(data.Dataset):
         label_file = np.load(self.label_path)
 
         for image, label in zip(image_file, label_file):
+            label[label == -1] = 0
             self.images.append((image, label))
 
 

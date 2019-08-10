@@ -10,6 +10,7 @@ from pytorch_lightning import Trainer
 from test_tube import Experiment
 
 from voc_loader import load_voc
+from metrics import mean_average_precision
 from utils import LightningConfig
 from utils import AverageMeter
 
@@ -51,14 +52,25 @@ class Basic_Trainer(pl.LightningModule):
         output = nn.Sigmoid()(output)
         loss = self.criterion(output, y_val)
 
-        return {"val_loss": loss.item()}
+        return {"val_loss": loss.item(), "pred": output, "label": y_val}
 
     def validation_end(self, outputs):
         # integrate outputs for one validation epoch, return type in dict
         validation_loss = AverageMeter()
         for loss_dict in outputs:
             validation_loss.update(loss_dict["val_loss"], 1)
-        return {"avg_val_loss": validation_loss.avg}
+
+            batch_pred = loss_dict["pred"].detach().cpu().numpy()
+            batch_label = loss_dict["label"].detach().cpu().numpy()
+
+            if "pred_whole" in locals():
+                pred_whole = np.concatenate((pred_whole, batch_pred))
+                label_whole = np.concatenate((label_whole, batch_label))
+            else:
+                pred_whole = batch_pred
+                label_whole = batch_label
+        mAP = mean_average_precision(pred_whole, label_whole)
+        return {"avg_val_loss": validation_loss.avg, "meanAP": mAP}
 
     def configure_optimizers(self):
         # return list of optimizers
@@ -85,10 +97,10 @@ def main():
             imagepath="",
             train_labelpath="",
             valid_labelpath="",
-            pretrained=True,
+            pretrained=False,
         )
     )
-    exp = Experiment(save_dir="runs/alexnet_voc07", name="FirstBaseline")
+    exp = Experiment(save_dir="runs/alexnet_no_pretrained", name="Baseline")
     trainer = Trainer(experiment=exp)
     trainer.fit(model)
     exp.save()
