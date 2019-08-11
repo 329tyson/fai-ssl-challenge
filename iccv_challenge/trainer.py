@@ -23,11 +23,15 @@ class Basic_Trainer(pl.LightningModule):
         # do some initialization
         super(Basic_Trainer, self).__init__()
         self.model = models.alexnet(pretrained=config.pretrained)
-        self.criterion = nn.BCEWithLogitsLoss().cuda()
+        # self.criterion = nn.BCEWithLogitsLoss().cuda()
+        # dunno why, but this one is better
+        self.criterion = nn.BCELoss().cuda()
 
         # Reconfigure last classifier for fine-tuning
         self.model.classifier[6] = nn.Linear(4096, 20)
-        nn.init.xavier_uniform_(self.model.classifier[6].weight)
+
+        # xavier_uniform init decrease performance
+        # nn.init.xavier_uniform_(self.model.classifier[6].weight)
         self.model.cuda()
 
     def forward(self, x):
@@ -41,6 +45,7 @@ class Basic_Trainer(pl.LightningModule):
         y_val = y.cuda().float()
 
         output = self.forward(x_val)
+        output = nn.Sigmoid()(output)
 
         return {"loss": self.criterion(output, y_val)}
 
@@ -51,6 +56,7 @@ class Basic_Trainer(pl.LightningModule):
         y_val = y.cuda().float()
 
         output = self.forward(x_val)
+        output = nn.Sigmoid()(output)
         loss = self.criterion(output, y_val)
 
         return {"val_loss": loss.item(), "pred": output, "label": y_val}
