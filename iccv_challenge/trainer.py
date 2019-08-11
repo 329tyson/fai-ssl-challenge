@@ -12,9 +12,11 @@ from test_tube import Experiment
 from test_tube import HyperOptArgumentParser
 
 from voc_loader import load_voc
+from clfnets.build_clfnets import build_clfnet
 from metrics import mean_average_precision
 from utils import available_gpu
 from utils import LightningConfig
+from utils import ClfnetConfig
 from utils import AverageMeter
 
 
@@ -22,17 +24,19 @@ class Basic_Trainer(pl.LightningModule):
     def __init__(self, config: LightningConfig):
         # do some initialization
         super(Basic_Trainer, self).__init__()
-        self.model = models.alexnet(pretrained=config.pretrained)
-        # self.criterion = nn.BCEWithLogitsLoss().cuda()
-        # dunno why, but this one is better
+
+        # define your model
+        self.model = build_clfnet(
+            ClfnetConfig(
+                model_name="alexnet",
+                num_class=20,
+                pretrained=config.pretrained,
+                change_classifier=True,
+            )
+        )
+
+        # BceLoss is better than BCEWithLogitsLoss
         self.criterion = nn.BCELoss().cuda()
-
-        # Reconfigure last classifier for fine-tuning
-        self.model.classifier[6] = nn.Linear(4096, 20)
-
-        # xavier_uniform init decrease performance
-        # nn.init.xavier_uniform_(self.model.classifier[6].weight)
-        self.model.cuda()
 
     def forward(self, x):
         # forward propagation
@@ -100,7 +104,7 @@ class Basic_Trainer(pl.LightningModule):
 
 
 def main(args):
-    print(f"Running on GPU{available_gpu()}")
+    print(f"Running on GPU: {available_gpu()}")
     model = Basic_Trainer(
         LightningConfig(
             imagepath="",
@@ -109,7 +113,7 @@ def main(args):
             pretrained=args.pretrained,
         )
     )
-    exp = Experiment(save_dir=f"runs/{args.desc}", name="Baseline")
+    exp = Experiment(save_dir=f"{args.tsb_runs}/{args.desc}", name="Baseline")
     exp.argparse(args)
 
     trainer = Trainer(experiment=exp, max_nb_epochs=args.epochs)
@@ -125,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", type=str)
     parser.add_argument("--desc", type=str, default="no description specified")
     parser.add_argument("--pretrained", action="store_true")
+    parser.add_argument("--tsb_runs", type=str, default="runs")
 
     parser.set_defaults(pretrained=False)
     args = parser.parse_args()

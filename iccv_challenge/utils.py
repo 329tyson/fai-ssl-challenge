@@ -66,7 +66,7 @@ class ClfnetConfig(NamedTuple):
     model_name: str
     num_class: int
     pretrained: bool
-    finetune: bool
+    change_classifier: bool
 
 
 class AverageMeter(object):

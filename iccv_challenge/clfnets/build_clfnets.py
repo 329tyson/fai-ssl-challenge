@@ -4,25 +4,22 @@ import torch.nn as nn
 import torchvision.models as models
 
 from utils import ClfnetConfig
+from clfnets.classifier_tuning import change_last_layer
 
 
-def _build_model_from_pytorch(config: Clfnetconfig) -> nn.Module:
+def _build_model_from_pytorch(config: ClfnetConfig):
     # geneerate model from torchvision.models with given name
     model_name = config.model_name
-    num_class = config.num_class
-    pretrained = config.pretrained
-    finetune = config.finetune
 
     model_name = model_name.lower()
     models_in_pytorch = models.__dict__.keys()
 
     assert model_name in models_in_pytorch
 
-    model = models.__dict__[model_name](pretrained=pretrained)
+    model = models.__dict__[model_name](pretrained=config.pretrained)
 
-    if finetune:
-        # TODO implemenet robust reconfigure module changing last classifier
-        pass
+    if config.change_classifier:
+        change_last_layer(config, model)
 
     return model.cuda()
 
