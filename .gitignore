@@ -17,3 +17,5 @@ coco/
 *runs/
 *logs/
 *datasets/
+*checkpoints/
+*.pt

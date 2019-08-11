@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 import torchvision.models as models
 
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from test_tube import Experiment
 from test_tube import HyperOptArgumentParser
 
@@ -115,6 +116,14 @@ def main(args):
     )
     exp = Experiment(save_dir=f"{args.tsb_runs}/{args.desc}", name="Baseline")
     exp.argparse(args)
+
+    checkpoint_callback = ModelCheckpoint(
+        filepath="",
+        save_best_only=True,
+        verbose=True,
+        monitor="val_loss",
+        mode="min"
+    )
 
     trainer = Trainer(experiment=exp, max_nb_epochs=args.epochs)
     trainer.fit(model)
