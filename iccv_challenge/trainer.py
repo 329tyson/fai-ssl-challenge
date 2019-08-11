@@ -9,6 +9,7 @@ import torchvision.models as models
 
 from pytorch_lightning import Trainer
 from test_tube import Experiment
+from test_tube import HyperOptArgumentParser
 
 from voc_loader import load_voc
 from metrics import mean_average_precision
@@ -25,9 +26,8 @@ class Basic_Trainer(pl.LightningModule):
         self.criterion = nn.BCELoss().cuda()
 
         # Reconfigure last classifier for fine-tuning
-        # FIXME newly added layer might need some init work?
         self.model.classifier[6] = nn.Linear(4096, 20)
-        nn.init.xavier_uniform(self.model.classifier[6].weight)
+        nn.init.xavier_uniform_(self.model.classifier[6].weight)
         self.model.cuda()
 
     def forward(self, x):
@@ -106,7 +106,9 @@ def main(args):
         )
     )
     exp = Experiment(save_dir=f"runs/{args.desc}", name="Baseline")
-    trainer = Trainer(experiment=exp)
+    exp.argparse(args)
+
+    trainer = Trainer(experiment=exp, max_nb_epochs=args.epochs)
     trainer.fit(model)
     exp.save()
 
