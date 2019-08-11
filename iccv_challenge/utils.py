@@ -56,6 +56,19 @@ class TrainingConfig(NamedTuple):
     criterion: object
 
 
+class ClfnetConfig(NamedTuple):
+    '''
+    Attributes:
+        imagepath: path to images directory, or path written in numpy
+        labelpath: path to labels directory, or path written in numpy
+        preprocess: list of transforms, notice you don't need to apply transforms.compose
+    '''
+    model_name: str
+    num_class: int
+    pretrained: bool
+    finetune: bool
+
+
 class AverageMeter(object):
     def __init__(self):
         self.reset()
@@ -127,8 +140,8 @@ def available_gpu():
         stdout=subprocess.PIPE
     )
     gpu_info = gpu_info.stdout.decode("ascii")
-    gpu_mem = [x.split()[2] for x in gpu_info.split("\n")[:-1]]
+    gpu_mem = [x.split()[0] for x in gpu_info.split("\n")[:-1]]
 
-    device_num = np.argmax(np.array(gpu_mem))
+    device_num = np.argmin(np.array(gpu_mem))
     _set_visible_devices(device_num)
     return device_num
