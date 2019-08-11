@@ -15,4 +15,4 @@ def mean_average_precision(prediction, labels, num_class=20):
         label = labels[:, i]
         mAP += average_precision_score(label, pred)
 
-    return mAP / num_class
+    return mAP / num_class * 100

@@ -114,20 +114,25 @@ def main(args):
             pretrained=args.pretrained,
         )
     )
-    exp = Experiment(save_dir=f"{args.tsb_runs}/{args.desc}", name="Baseline")
+    exp = Experiment(
+        save_dir=f"{args.tsb_runs}/{args.desc}",
+        name="Baseline",
+        create_git_tag=args.create_git_tag,
+    )
     exp.argparse(args)
 
     checkpoint_callback = ModelCheckpoint(
         filepath=f"checkpoints/{args.desc}",
         save_best_only=True,
         verbose=True,
-        monitor="val_loss",
+        monitor="avg_val_loss",
         mode="min"
     )
 
     trainer = Trainer(
         experiment=exp,
         max_nb_epochs=args.epochs,
+        checkpoint_callback=checkpoint_callback,
     )
     trainer.fit(model)
     exp.save()
@@ -136,13 +141,15 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("fai-ssl-challenge-parser")
     parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--lr_decay", type=int, default=20)
+    parser.add_argument("--lr_decay", type=int, default=25)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--resume", type=str)
     parser.add_argument("--desc", type=str, default="no description specified")
-    parser.add_argument("--pretrained", action="store_true")
     parser.add_argument("--tsb_runs", type=str, default="runs")
+    parser.add_argument("--pretrained", action="store_true")
+    parser.add_argument("--create_git_tag", action="store_true")
 
     parser.set_defaults(pretrained=False)
+    parser.set_defaults(create_git_tag=False)
     args = parser.parse_args()
     main(args)
