@@ -88,7 +88,7 @@ class Basic_Trainer(pl.LightningModule):
     def configure_optimizers(self):
         # return list of optimizers
         optimizer = optim.SGD(self.model.parameters(), lr=0.01)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25)
         return [optimizer], [scheduler]
 
     @pl.data_loader
@@ -118,14 +118,17 @@ def main(args):
     exp.argparse(args)
 
     checkpoint_callback = ModelCheckpoint(
-        filepath="",
+        filepath=f"checkpoints/{args.desc}",
         save_best_only=True,
         verbose=True,
         monitor="val_loss",
         mode="min"
     )
 
-    trainer = Trainer(experiment=exp, max_nb_epochs=args.epochs)
+    trainer = Trainer(
+        experiment=exp,
+        max_nb_epochs=args.epochs,
+    )
     trainer.fit(model)
     exp.save()
 
