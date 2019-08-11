@@ -29,7 +29,7 @@ class Basic_Trainer(pl.LightningModule):
         # define your model
         self.model = build_clfnet(
             ClfnetConfig(
-                model_name="alexnet",
+                model_name="resnet50",
                 num_class=20,
                 pretrained=config.pretrained,
                 change_classifier=True,
@@ -87,7 +87,16 @@ class Basic_Trainer(pl.LightningModule):
 
     def configure_optimizers(self):
         # return list of optimizers
-        optimizer = optim.SGD(self.model.parameters(), lr=0.01)
+        optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9)
+        # optimizer = optim.SGD(
+            # [
+                # {"params": self.model.features.parameters()},
+                # {"params": self.model.classifier[:6].parameters()},
+                # {"params": self.model.classifier[6].parameters(), "lr": 0.001},
+            # ],
+            # lr=0.01,
+            # momentum=0.9,
+        # )
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25)
         return [optimizer], [scheduler]
 
@@ -105,7 +114,6 @@ class Basic_Trainer(pl.LightningModule):
 
 
 def main(args):
-    print(f"Running on GPU: {available_gpu()}")
     model = Basic_Trainer(
         LightningConfig(
             imagepath="",
