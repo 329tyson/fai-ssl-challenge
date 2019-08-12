@@ -10,7 +10,6 @@ import torchvision.models as models
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from test_tube import Experiment
-from test_tube import HyperOptArgumentParser
 
 from voc_loader import load_voc
 from clfnets.build_clfnets import build_clfnet

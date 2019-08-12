@@ -15,6 +15,7 @@ coco/
 #voc2007/
 
 *runs/
+*models/
 *logs/
 *datasets/
 *checkpoints/
