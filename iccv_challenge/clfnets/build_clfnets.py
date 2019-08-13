@@ -1,9 +1,11 @@
 import os
+import torch
 
 import torch.nn as nn
 import torchvision.models as models
 
 from utils import ClfnetConfig
+from clfnets.deepcluster_alexnet import alexnet
 from clfnets.classifier_tuning import change_last_layer
 
 
@@ -34,4 +36,17 @@ def build_clfnet(config: ClfnetConfig):
 
     else:
         # return your custom designeed network
-        pass
+        if model_name == "deepcluster_alexnet":
+            model = alexnet(sobel=True, bn=True, out=10000)
+            model.features = torch.nn.DataParallel(model.features)
+            if config.pretrained:
+                checkpoint_path = "pretrained_models/checkpoint.pth.tar"
+                pretrained_dict = torch.load(checkpoint_path)["state_dict"]
+
+                model.load_state_dict(pretrained_dict)
+
+                # change classifier
+                model.top_layer = nn.Linear(4096, config.num_class)
+            return model.cuda()
+
+        raise NotImplementedError

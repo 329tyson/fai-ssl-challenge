@@ -28,7 +28,7 @@ class Basic_Trainer(pl.LightningModule):
         # define your model
         self.model = build_clfnet(
             ClfnetConfig(
-                model_name="resnet50",
+                model_name="deepcluster_alexnet",
                 num_class=20,
                 pretrained=config.pretrained,
                 change_classifier=True,
@@ -86,16 +86,17 @@ class Basic_Trainer(pl.LightningModule):
 
     def configure_optimizers(self):
         # return list of optimizers
-        optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9)
-        # optimizer = optim.SGD(
-            # [
-                # {"params": self.model.features.parameters()},
-                # {"params": self.model.classifier[:6].parameters()},
-                # {"params": self.model.classifier[6].parameters(), "lr": 0.001},
-            # ],
-            # lr=0.01,
-            # momentum=0.9,
-        # )
+        # optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.9)
+        optimizer = optim.SGD(
+            [
+                {"params": self.model.features.parameters()},
+                {"params": self.model.classifier.parameters()},
+                {"params": self.model.sobel.parameters()},
+                {"params": self.model.top_layer.parameters(), "lr": 0.1},
+            ],
+            lr=0.01,
+            momentum=0.9,
+        )
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25)
         return [optimizer], [scheduler]
 
