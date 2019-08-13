@@ -20,22 +20,6 @@ class DatasetConfig(NamedTuple):
     preprocess: list
 
 
-class LightningConfig(NamedTuple):
-    '''
-    Attributes:
-        imagepath: path to the root directory of image data
-        train_labelpath: path to the csv files with train label
-        valid_labelpath: path to the csv files with valid label
-        low_ratio: low_resolution ratio, give 0 if you don't want
-        mean: list of RGB mean you want to apply at normalization
-        std : list of RGB standard deviation you want to apply at normalization
-    '''
-    imagepath: str
-    train_labelpath: str
-    valid_labelpath: str
-    pretrained: bool
-
-
 class TrainingConfig(NamedTuple):
     '''
     Attributes:
@@ -47,13 +31,10 @@ class TrainingConfig(NamedTuple):
         valid_loader: dataloader for test(validation)
         criterion: loss function for calculate loss
     '''
-    model: object
-    epochs: int
-    optimizer: object
-    init_lr: float
-    train_loader: object
-    valid_loader: object
+    model_name: str
+    lr: float
     criterion: object
+    pretrained: bool
 
 
 class ClfnetConfig(NamedTuple):

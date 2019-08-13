@@ -15,28 +15,29 @@ from voc_loader import load_voc
 from clfnets.build_clfnets import build_clfnet
 from metrics import mean_average_precision
 from utils import available_gpu
-from utils import LightningConfig
+from utils import TrainingConfig
 from utils import ClfnetConfig
 from utils import AverageMeter
 
 
 class Basic_Trainer(pl.LightningModule):
-    def __init__(self, config: LightningConfig):
+    def __init__(self, config: TrainingConfig):
         # do some initialization
         super(Basic_Trainer, self).__init__()
+        self.model_name = config.model_name
+        self.lr = config.lr
+        self.criterion = config.criterion
+        self.pretrained = config.pretrained
 
         # define your model
         self.model = build_clfnet(
             ClfnetConfig(
-                model_name="deepcluster_alexnet",
+                model_name=self.model_name,
                 num_class=20,
-                pretrained=config.pretrained,
+                pretrained=self.pretrained,
                 change_classifier=True,
             )
         )
-
-        # BceLoss is better than BCEWithLogitsLoss
-        self.criterion = nn.BCELoss().cuda()
 
     def forward(self, x):
         # forward propagation
@@ -92,9 +93,9 @@ class Basic_Trainer(pl.LightningModule):
                 {"params": self.model.features.parameters()},
                 {"params": self.model.classifier.parameters()},
                 {"params": self.model.sobel.parameters()},
-                {"params": self.model.top_layer.parameters(), "lr": 0.1},
+                {"params": self.model.top_layer.parameters(), "lr": self.lr},
             ],
-            lr=0.01,
+            lr=self.lr * 10,
             momentum=0.9,
         )
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25)
@@ -115,10 +116,10 @@ class Basic_Trainer(pl.LightningModule):
 
 def main(args):
     model = Basic_Trainer(
-        LightningConfig(
-            imagepath="",
-            train_labelpath="",
-            valid_labelpath="",
+        TrainingConfig(
+            model_name=args.model_name,
+            lr=args.lr,
+            criterion=nn.BCELoss().cuda(),
             pretrained=args.pretrained,
         )
     )
@@ -148,6 +149,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("fai-ssl-challenge-parser")
+    parser.add_argument("--model_name", type=str, default="deepcluster_alexnet")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--lr_decay", type=int, default=25)
     parser.add_argument("--lr", type=float, default=0.01)
